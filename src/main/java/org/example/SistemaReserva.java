@@ -1,14 +1,19 @@
 package org.example;
 
+import java.io.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
-public class SistemaReserva {
+public class SistemaReserva implements Serializable {
+    private static final long serialVersionUID = 1L;
     private List<Equipamento> equipamentos;
     private List<Reserva> reservas;
-    private Scanner scanner;
+    private transient Scanner scanner;
 
     public SistemaReserva() {
         equipamentos = new ArrayList<>();
@@ -35,7 +40,8 @@ public class SistemaReserva {
             System.out.println("1. Listar Equipamentos");
             System.out.println("2. Reservar Equipamento");
             System.out.println("3. Listar Reservas");
-            System.out.println("4. Sair");
+            System.out.println("4. Zerar Reservas");
+            System.out.println("5. Sair");
             System.out.print("Escolha uma opção: ");
             opcao = scanner.nextInt();
             scanner.nextLine(); // Consumir a nova linha
@@ -51,12 +57,16 @@ public class SistemaReserva {
                     listarReservas();
                     break;
                 case 4:
+                    zerarReservas();
+                    break;
+                case 5:
                     System.out.println("Saindo do sistema...");
+                    salvarDados();
                     break;
                 default:
                     System.out.println("Opção inválida. Tente novamente.");
             }
-        } while (opcao != 4);
+        } while (opcao != 5);
     }
 
     private void listarEquipamentos() {
@@ -78,10 +88,17 @@ public class SistemaReserva {
 
         Equipamento equipamento = escolherEquipamento();
         if (equipamento != null) {
-            Date dataReserva = new Date(); // Usar a data atual para a reserva
-            Reserva reserva = new Reserva(equipamento, dataReserva, solicitante);
-            reservas.add(reserva);
-            System.out.println("Equipamento reservado com sucesso.");
+            LocalDate dataReserva = obterDataReserva();
+            LocalTime horaEntrada = obterHoraReserva("entrada");
+            LocalTime horaSaida = obterHoraReserva("saída");
+
+            if (horaSaida.isAfter(horaEntrada)) {
+                Reserva reserva = new Reserva(equipamento, dataReserva, horaEntrada, horaSaida, solicitante);
+                reservas.add(reserva);
+                System.out.println("Equipamento reservado com sucesso.");
+            } else {
+                System.out.println("Erro: O horário de saída deve ser após o horário de entrada.");
+            }
         } else {
             System.out.println("Nenhum equipamento reservado.");
         }
@@ -115,6 +132,40 @@ public class SistemaReserva {
         }
     }
 
+    private LocalDate obterDataReserva() {
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        LocalDate hoje = LocalDate.now();
+
+        while (true) {
+            System.out.print("Digite a data da reserva (dd/MM/yyyy): ");
+            String dataInput = scanner.nextLine();
+            try {
+                LocalDate dataReserva = LocalDate.parse(dataInput, dateFormatter);
+                if (dataReserva.isBefore(hoje)) {
+                    System.out.println("Erro: A data da reserva não pode ser anterior à data atual.");
+                } else {
+                    return dataReserva;
+                }
+            } catch (DateTimeParseException e) {
+                System.out.println("Formato de data inválido. Tente novamente.");
+            }
+        }
+    }
+
+    private LocalTime obterHoraReserva(String tipo) {
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+        while (true) {
+            System.out.print("Digite o horário de " + tipo + " (HH:mm): ");
+            String horaInput = scanner.nextLine();
+            try {
+                return LocalTime.parse(horaInput, timeFormatter);
+            } catch (DateTimeParseException e) {
+                System.out.println("Formato de horário inválido. Tente novamente.");
+            }
+        }
+    }
+
     private void listarReservas() {
         System.out.println("\n--- Reservas ---");
         for (Reserva reserva : reservas) {
@@ -122,9 +173,42 @@ public class SistemaReserva {
         }
     }
 
+    private void zerarReservas() {
+        for (Reserva reserva : reservas) {
+            reserva.getEquipamento().setDisponivel(true);
+        }
+        reservas.clear();
+        System.out.println("Todas as reservas foram zeradas.");
+    }
+
+    private void salvarDados() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("dadosReserva.ser"))) {
+            oos.writeObject(equipamentos);
+            oos.writeObject(reservas);
+            System.out.println("Dados salvos com sucesso.");
+        } catch (IOException e) {
+            System.out.println("Erro ao salvar os dados: " + e.getMessage());
+        }
+    }
+
+    private void carregarDados() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream("dadosReserva.ser"))) {
+            equipamentos = (List<Equipamento>) ois.readObject();
+            reservas = (List<Reserva>) ois.readObject();
+            System.out.println("Dados carregados com sucesso.");
+        } catch (FileNotFoundException e) {
+            System.out.println("Nenhum dado salvo encontrado. Iniciando com novos dados.");
+        } catch (IOException | ClassNotFoundException e) {
+            System.out.println("Erro ao carregar os dados: " + e.getMessage());
+        }
+    }
+
     public static void main(String[] args) {
         SistemaReserva sistema = new SistemaReserva();
+        sistema.carregarDados();
         sistema.exibirMenu();
     }
 }
+
+
 

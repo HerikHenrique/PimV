@@ -1,7 +1,10 @@
 package org.example;
 import java.util.Date;
 
-public class Equipamento {
+import java.io.Serializable;
+
+public class Equipamento implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String nome;
     private boolean disponivel;
 
@@ -24,6 +27,6 @@ public class Equipamento {
 
     @Override
     public String toString() {
-        return "Equipamento: " + nome + " (Disponível: " + disponivel + ")";
+        return nome + " (Disponível: " + disponivel + ")";
     }
 }
