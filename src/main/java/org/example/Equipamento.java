@@ -27,6 +27,6 @@ public class Equipamento implements Serializable {
 
     @Override
     public String toString() {
-        return nome + " (Disponível: " + disponivel + ")";
+        return nome;
     }
 }

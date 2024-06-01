@@ -3,7 +3,6 @@ package org.example;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
 public class Reserva implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -19,7 +18,6 @@ public class Reserva implements Serializable {
         this.horaEntrada = horaEntrada;
         this.horaSaida = horaSaida;
         this.solicitante = solicitante;
-        equipamento.setDisponivel(false);
     }
 
     public Equipamento getEquipamento() {
@@ -44,11 +42,15 @@ public class Reserva implements Serializable {
 
     @Override
     public String toString() {
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-        return "Reserva feita por: " + solicitante + " em " + dataReserva.format(dateFormatter) +
-                " das " + horaEntrada.format(timeFormatter) + " às " + horaSaida.format(timeFormatter) +
-                " para o equipamento: " + equipamento.getNome();
+        return "Reserva{" +
+                "equipamento=" + equipamento +
+                ", dataReserva=" + dataReserva +
+                ", horaEntrada=" + horaEntrada +
+                ", horaSaida=" + horaSaida +
+                ", solicitante='" + solicitante + '\'' +
+                '}';
     }
 }
+
+
 
